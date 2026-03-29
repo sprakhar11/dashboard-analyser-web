@@ -75,13 +75,10 @@ export function useDashboard(initialFilters) {
     setChartsError(null);
     try {
       const f = currentFilters || initialFilters;
-      // Trend endpoint requires YYYY-MM-DD, extract date part from LocalDateTime
-      const fromDateOnly = f.dateRange.fromDate ? f.dateRange.fromDate.slice(0, 10) : undefined;
-      const toDateOnly = f.dateRange.toDate ? f.dateRange.toDate.slice(0, 10) : undefined;
       const data = await getFeatureTrend(token, {
         featureId,
-        fromDate: fromDateOnly,
-        toDate: toDateOnly,
+        fromDate: f.dateRange.fromDate || undefined,
+        toDate: f.dateRange.toDate || undefined,
         bucket,
         ageBucketId: f.ageBucketId,
         genderId: f.genderId,

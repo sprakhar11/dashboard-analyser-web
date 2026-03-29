@@ -142,7 +142,7 @@ describe('LoginPage - Unit Tests', () => {
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'wrong' } });
+    fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));

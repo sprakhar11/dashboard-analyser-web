@@ -5,6 +5,57 @@ import { useAuth } from '../context/AuthContext.jsx';
 import LoginForm from '../components/LoginForm.jsx';
 import HealthStatusDisplay from '../components/HealthStatusDisplay.jsx';
 
+const pageStyle = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: '#f8f8fa',
+  colorScheme: 'light',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+};
+
+const cardStyle = {
+  width: '100%',
+  maxWidth: '400px',
+  background: '#fff',
+  border: '1px solid #e5e4e7',
+  borderRadius: '12px',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+  padding: '32px',
+  boxSizing: 'border-box',
+};
+
+const titleStyle = {
+  fontSize: '22px',
+  fontWeight: 700,
+  color: '#08060d',
+  margin: '0 0 4px 0',
+  textAlign: 'center',
+};
+
+const subtitleStyle = {
+  fontSize: '14px',
+  color: '#888',
+  margin: '0 0 24px 0',
+  textAlign: 'center',
+};
+
+const msgStyle = {
+  padding: '8px 12px',
+  borderRadius: '6px',
+  fontSize: '13px',
+  marginBottom: '16px',
+  textAlign: 'center',
+};
+
+const linkStyle = {
+  fontSize: '13px',
+  color: '#555',
+  textAlign: 'center',
+  marginTop: '20px',
+};
+
 function getErrorMessage(err) {
   switch (err.code) {
     case 'INVALID_CREDENTIALS':
@@ -29,44 +80,53 @@ export default function LoginPage() {
 
   const successMessage = location.state?.message;
 
-  // Track if we've ever reached connected state
   if (status === 'connected') {
     hasConnected.current = true;
   }
 
-  // Only show loading/connecting screens before the first successful connection
   if (!hasConnected.current) {
     if (status === 'loading') {
-      return <p>Loading...</p>;
+      return <div style={pageStyle}><div style={cardStyle}><p style={{ textAlign: 'center', color: '#888' }}>Loading...</p></div></div>;
     }
-
     if (status === 'error') {
-      return <p role="status">Connecting to backend...</p>;
+      return <div style={pageStyle}><div style={cardStyle}><p role="status" style={{ textAlign: 'center', color: '#888' }}>Connecting to backend...</p></div></div>;
     }
-
     if (status === 'disconnected') {
       return <HealthStatusDisplay databaseStatus={databaseStatus} />;
     }
   }
 
   return (
-    <>
-      {successMessage && <p role="status">{successMessage}</p>}
-      {loginError && <p role="alert">{loginError}</p>}
-      <LoginForm
-        onSubmit={async (email, password) => {
-          setLoginError(null);
-          try {
-            await login(email, password);
-            navigate('/');
-          } catch (err) {
-            setLoginError(getErrorMessage(err));
-          }
-        }}
-      />
-      <p>
-        Don&apos;t have an account? <Link to="/register">Register</Link>
-      </p>
-    </>
+    <div style={pageStyle}>
+      <div style={cardStyle}>
+        <h1 style={titleStyle}>Welcome back</h1>
+        <p style={subtitleStyle}>Sign in to your account</p>
+        {successMessage && (
+          <div role="status" style={{ ...msgStyle, background: '#e8f5e9', color: '#2e7d32' }}>
+            {successMessage}
+          </div>
+        )}
+        {loginError && (
+          <div role="alert" style={{ ...msgStyle, background: '#ffeef0', color: '#d32f2f' }}>
+            {loginError}
+          </div>
+        )}
+        <LoginForm
+          onSubmit={async (email, password) => {
+            setLoginError(null);
+            try {
+              await login(email, password);
+              navigate('/');
+            } catch (err) {
+              setLoginError(getErrorMessage(err));
+            }
+          }}
+        />
+        <p style={linkStyle}>
+          Don&apos;t have an account?{' '}
+          <Link to="/register" style={{ color: '#4f8df5', textDecoration: 'none', fontWeight: 500 }}>Register</Link>
+        </p>
+      </div>
+    </div>
   );
 }

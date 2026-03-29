@@ -11,7 +11,7 @@ describe('RegisterForm - Unit Tests', () => {
     expect(screen.getByLabelText(/password/i)).toBeDefined();
     expect(screen.getByLabelText(/age/i)).toBeDefined();
     expect(screen.getByLabelText(/gender/i)).toBeDefined();
-    expect(screen.getByRole('button', { name: /register/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /create account/i })).toBeDefined();
   });
 
   it('should call onSubmit with all fields including age and genderId on form submission', () => {
@@ -23,7 +23,7 @@ describe('RegisterForm - Unit Tests', () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'securepass' } });
     fireEvent.change(screen.getByLabelText(/age/i), { target: { value: '25' } });
     fireEvent.change(screen.getByLabelText(/gender/i), { target: { value: '2' } });
-    fireEvent.click(screen.getByRole('button', { name: /register/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(handleSubmit).toHaveBeenCalledTimes(1);
     expect(handleSubmit).toHaveBeenCalledWith({

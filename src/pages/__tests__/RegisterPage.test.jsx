@@ -42,7 +42,7 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/password/i)).not.toBeNull();
     expect(screen.getByLabelText(/age/i)).not.toBeNull();
     expect(screen.getByLabelText(/gender/i)).not.toBeNull();
-    expect(screen.getByRole('button', { name: /register/i })).not.toBeNull();
+    expect(screen.getByRole('button', { name: /create account/i })).not.toBeNull();
   });
 
   it('should call register with all fields including age and genderId on form submit', async () => {
@@ -56,7 +56,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/gender/i), { target: { value: '1' } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /register/i }));
+      fireEvent.click(screen.getByRole('button', { name: /create account/i }));
     });
 
     expect(mockRegister).toHaveBeenCalledWith({
@@ -79,7 +79,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/gender/i), { target: { value: '1' } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /register/i }));
+      fireEvent.click(screen.getByRole('button', { name: /create account/i }));
     });
 
     expect(mockNavigate).toHaveBeenCalledWith('/login', { state: { message: 'Account created! Please log in.' } });
@@ -98,7 +98,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/gender/i), { target: { value: '1' } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /register/i }));
+      fireEvent.click(screen.getByRole('button', { name: /create account/i }));
     });
 
     const alert = screen.getByRole('alert');
@@ -118,7 +118,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/gender/i), { target: { value: '1' } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /register/i }));
+      fireEvent.click(screen.getByRole('button', { name: /create account/i }));
     });
 
     const alert = screen.getByRole('alert');

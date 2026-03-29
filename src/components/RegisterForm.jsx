@@ -1,7 +1,7 @@
 /**
  * RegisterForm component.
- * Renders name, email, and password inputs with a submit button.
- * @param {{ onSubmit: (name: string, email: string, password: string) => void }} props
+ * Renders name, email, password, age, and gender inputs with a submit button.
+ * @param {{ onSubmit: (data: { name: string, email: string, password: string, genderId: number, age: number }) => void }} props
  */
 export default function RegisterForm({ onSubmit }) {
   return (
@@ -9,10 +9,13 @@ export default function RegisterForm({ onSubmit }) {
       onSubmit={(e) => {
         e.preventDefault();
         const form = e.target;
-        const name = form.elements.name.value;
-        const email = form.elements.email.value;
-        const password = form.elements.password.value;
-        onSubmit(name, email, password);
+        onSubmit({
+          name: form.elements.name.value,
+          email: form.elements.email.value,
+          password: form.elements.password.value,
+          age: Number(form.elements.age.value),
+          genderId: Number(form.elements.genderId.value),
+        });
       }}
     >
       <label htmlFor="register-name">Name</label>
@@ -23,6 +26,16 @@ export default function RegisterForm({ onSubmit }) {
 
       <label htmlFor="register-password">Password</label>
       <input id="register-password" type="password" name="password" required />
+
+      <label htmlFor="register-age">Age</label>
+      <input id="register-age" type="number" name="age" min="1" max="150" required />
+
+      <label htmlFor="register-gender">Gender</label>
+      <select id="register-gender" name="genderId" required>
+        <option value="1">Male</option>
+        <option value="2">Female</option>
+        <option value="3">Other</option>
+      </select>
 
       <button type="submit">Register</button>
     </form>

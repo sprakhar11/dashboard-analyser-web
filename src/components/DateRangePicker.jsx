@@ -1,94 +1,181 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
 /**
- * Formats a YYYY-MM-DD date string to a human-readable format (e.g., "Mar 1, 2026").
- * @param {string} dateStr - Date in YYYY-MM-DD format
- * @returns {string}
+ * Converts a YYYY-MM-DD date string to LocalDateTime start-of-day: YYYY-MM-DDT00:00:00
  */
-function formatDate(dateStr) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+function toStartOfDay(dateStr) {
+  return dateStr ? `${dateStr}T00:00:00` : null;
 }
 
 /**
- * DateRangePicker component.
- * Displays the current date range as formatted text. Clicking opens a popover
- * with two date inputs, Apply and Cancel buttons.
+ * Converts a YYYY-MM-DD date string to LocalDateTime end-of-day: YYYY-MM-DDT23:59:59
+ */
+function toEndOfDay(dateStr) {
+  return dateStr ? `${dateStr}T23:59:59` : null;
+}
+
+/**
+ * Extracts YYYY-MM-DD from a LocalDateTime string or returns as-is if already date-only.
+ */
+function toDateOnly(dateTimeStr) {
+  if (!dateTimeStr) return '';
+  return dateTimeStr.slice(0, 10);
+}
+
+/**
+ * Formats a date string for display. Returns "All time" for null.
+ */
+function formatDisplay(fromDate, toDate) {
+  if (!fromDate && !toDate) return 'All time';
+  const fmt = (str) => {
+    const [y, m, d] = str.slice(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  if (fromDate && toDate) return `${fmt(fromDate)} – ${fmt(toDate)}`;
+  if (fromDate) return `From ${fmt(fromDate)}`;
+  return `Up to ${fmt(toDate)}`;
+}
+
+/** Returns YYYY-MM-DD for today */
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Returns YYYY-MM-DD for N days ago */
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Returns YYYY-MM-DD for start of financial year (Apr 1) */
+function financialYearStart() {
+  const now = new Date();
+  const year = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+  return `${year}-04-01`;
+}
+
+/** Returns YYYY-MM-DD for N years ago from today */
+function yearsAgo(n) {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+const PRESETS = [
+  { label: 'All', from: null, to: null },
+  { label: 'Today', from: () => today(), to: () => today() },
+  { label: '30 Days', from: () => daysAgo(30), to: () => today() },
+  { label: 'FY', from: () => financialYearStart(), to: () => today() },
+  { label: '1Y', from: () => yearsAgo(1), to: () => today() },
+  { label: '2Y', from: () => yearsAgo(2), to: () => today() },
+  { label: '3Y', from: () => yearsAgo(3), to: () => today() },
+];
+
+const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+const btnBase = {
+  padding: '4px 10px',
+  border: '1px solid #e5e4e7',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  fontSize: '12px',
+  fontFamily: FONT,
+  backgroundColor: '#fff',
+  color: '#08060d',
+};
+
+const btnActive = {
+  ...btnBase,
+  backgroundColor: '#4f8df5',
+  color: '#fff',
+  borderColor: '#4f8df5',
+};
+
+/**
+ * DateRangePicker with presets and optional custom from/to.
  *
  * @param {Object} props
- * @param {{ fromDate: string, toDate: string }} props.value - Current applied range (YYYY-MM-DD)
- * @param {(range: {fromDate: string, toDate: string}) => void} props.onChange - Called on Apply
+ * @param {{ fromDate: string|null, toDate: string|null }} props.value
+ * @param {(range: { fromDate: string|null, toDate: string|null }) => void} props.onChange
  */
 export default function DateRangePicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({ fromDate: value.fromDate, toDate: value.toDate });
+  const [activePreset, setActivePreset] = useState(null);
+  const [draftFrom, setDraftFrom] = useState('');
+  const [draftTo, setDraftTo] = useState('');
   const popoverRef = useRef(null);
   const triggerRef = useRef(null);
 
-  // Sync draft when value prop changes while closed
+  // Determine active preset from current value on mount / value change
   useEffect(() => {
-    if (!open) {
-      setDraft({ fromDate: value.fromDate, toDate: value.toDate });
+    if (!value.fromDate && !value.toDate) {
+      setActivePreset('All');
+    } else {
+      setActivePreset('Custom');
     }
-  }, [value.fromDate, value.toDate, open]);
+    setDraftFrom(toDateOnly(value.fromDate));
+    setDraftTo(toDateOnly(value.toDate));
+  }, [value.fromDate, value.toDate]);
 
   const handleCancel = useCallback(() => {
-    setDraft({ fromDate: value.fromDate, toDate: value.toDate });
+    setDraftFrom(toDateOnly(value.fromDate));
+    setDraftTo(toDateOnly(value.toDate));
     setOpen(false);
   }, [value.fromDate, value.toDate]);
 
-  // Close popover on outside click (cancel behavior)
   useEffect(() => {
     if (!open) return;
-
     function handleClickOutside(e) {
       if (
-        popoverRef.current &&
-        !popoverRef.current.contains(e.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target)
+        popoverRef.current && !popoverRef.current.contains(e.target) &&
+        triggerRef.current && !triggerRef.current.contains(e.target)
       ) {
         handleCancel();
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, handleCancel]);
 
-  function handleApply() {
-    onChange({ fromDate: draft.fromDate, toDate: draft.toDate });
+  function handlePresetClick(preset) {
+    const from = typeof preset.from === 'function' ? preset.from() : preset.from;
+    const to = typeof preset.to === 'function' ? preset.to() : preset.to;
+    setActivePreset(preset.label);
+    onChange({
+      fromDate: toStartOfDay(from),
+      toDate: toEndOfDay(to),
+    });
     setOpen(false);
   }
 
-  function handleOpen() {
-    setDraft({ fromDate: value.fromDate, toDate: value.toDate });
-    setOpen(true);
+  function handleCustomApply() {
+    onChange({
+      fromDate: draftFrom ? toStartOfDay(draftFrom) : null,
+      toDate: draftTo ? toEndOfDay(draftTo) : null,
+    });
+    setActivePreset('Custom');
+    setOpen(false);
   }
 
-  const displayText = `${formatDate(value.fromDate)} – ${formatDate(value.toDate)}`;
+  const displayText = formatDisplay(value.fromDate, value.toDate);
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
         ref={triggerRef}
         type="button"
-        onClick={handleOpen}
+        onClick={() => { setDraftFrom(toDateOnly(value.fromDate)); setDraftTo(toDateOnly(value.toDate)); setOpen(!open); }}
         aria-label="Select date range"
         style={{
-          background: 'var(--bg, #fff)',
-          border: '1px solid var(--border, #e5e4e7)',
+          backgroundColor: '#fff',
+          border: '1px solid #e5e4e7',
           borderRadius: '6px',
           padding: '6px 12px',
           cursor: 'pointer',
           fontSize: '14px',
-          color: 'var(--text-h, #08060d)',
-          fontFamily: 'var(--sans)',
+          color: '#08060d',
+          fontFamily: FONT,
         }}
       >
         {displayText}
@@ -100,101 +187,49 @@ export default function DateRangePicker({ value, onChange }) {
           role="dialog"
           aria-label="Date range picker"
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            marginTop: '4px',
-            background: 'var(--bg, #fff)',
-            border: '1px solid var(--border, #e5e4e7)',
-            borderRadius: '8px',
-            boxShadow: 'var(--shadow)',
-            padding: '16px',
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            minWidth: '240px',
+            position: 'absolute', top: '100%', left: 0, marginTop: '4px',
+            background: '#fff', border: '1px solid #e5e4e7', borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '16px', zIndex: 10,
+            display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '280px',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label
-              htmlFor="date-range-from"
-              style={{ fontSize: '13px', color: 'var(--text)', fontFamily: 'var(--sans)' }}
-            >
-              From
-            </label>
-            <input
-              id="date-range-from"
-              type="date"
-              value={draft.fromDate}
-              onChange={(e) => setDraft((d) => ({ ...d, fromDate: e.target.value }))}
-              style={{
-                padding: '4px 8px',
-                border: '1px solid var(--border, #e5e4e7)',
-                borderRadius: '4px',
-                fontSize: '14px',
-                fontFamily: 'var(--sans)',
-                color: 'var(--text-h)',
-              }}
-            />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => handlePresetClick(p)}
+                style={activePreset === p.label ? btnActive : btnBase}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label
-              htmlFor="date-range-to"
-              style={{ fontSize: '13px', color: 'var(--text)', fontFamily: 'var(--sans)' }}
-            >
-              To
-            </label>
-            <input
-              id="date-range-to"
-              type="date"
-              value={draft.toDate}
-              onChange={(e) => setDraft((d) => ({ ...d, toDate: e.target.value }))}
-              style={{
-                padding: '4px 8px',
-                border: '1px solid var(--border, #e5e4e7)',
-                borderRadius: '4px',
-                fontSize: '14px',
-                fontFamily: 'var(--sans)',
-                color: 'var(--text-h)',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={handleCancel}
-              style={{
-                padding: '6px 14px',
-                border: '1px solid var(--border, #e5e4e7)',
-                borderRadius: '6px',
-                background: 'var(--bg, #fff)',
-                cursor: 'pointer',
-                fontSize: '13px',
-                color: 'var(--text)',
-                fontFamily: 'var(--sans)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleApply}
-              style={{
-                padding: '6px 14px',
-                border: 'none',
-                borderRadius: '6px',
-                background: 'var(--accent, #aa3bff)',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontFamily: 'var(--sans)',
-              }}
-            >
-              Apply
-            </button>
+          <div style={{ borderTop: '1px solid #e5e4e7', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#888', fontFamily: FONT }}>Custom range</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <label htmlFor="date-range-from" style={{ fontSize: '13px', color: '#555', fontFamily: FONT }}>From</label>
+              <input
+                id="date-range-from"
+                type="date"
+                value={draftFrom}
+                onChange={(e) => setDraftFrom(e.target.value)}
+                style={{ padding: '4px 8px', border: '1px solid #e5e4e7', borderRadius: '4px', fontSize: '13px', fontFamily: FONT, color: '#08060d', backgroundColor: '#fff' }}
+              />
+              <label htmlFor="date-range-to" style={{ fontSize: '13px', color: '#555', fontFamily: FONT }}>To</label>
+              <input
+                id="date-range-to"
+                type="date"
+                value={draftTo}
+                onChange={(e) => setDraftTo(e.target.value)}
+                style={{ padding: '4px 8px', border: '1px solid #e5e4e7', borderRadius: '4px', fontSize: '13px', fontFamily: FONT, color: '#08060d', backgroundColor: '#fff' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={handleCancel} style={{ ...btnBase, padding: '5px 14px' }}>Cancel</button>
+              <button type="button" onClick={handleCustomApply} style={{ ...btnBase, padding: '5px 14px', backgroundColor: '#4f8df5', color: '#fff', borderColor: '#4f8df5' }}>Apply</button>
+            </div>
           </div>
         </div>
       )}

@@ -245,13 +245,16 @@ describe('DashboardPage - Unit Tests', () => {
   /**
    * Validates: Requirement 6.4
    */
-  it('bar click calls fetchTrend, setSelectedFeatureId, and fires tracking event', () => {
+  it('bar click calls fetchDashboard, fetchTrend, setSelectedFeatureId, and fires tracking event', () => {
     renderDashboard();
     fireEvent.click(screen.getByTestId('bar-click-trigger'));
     expect(mockSetSelectedFeatureId).toHaveBeenCalledWith(20);
+    expect(mockFetchDashboard).toHaveBeenCalledWith(expect.objectContaining({
+      selectedFeatureId: 20,
+    }));
     expect(mockFetchTrend).toHaveBeenCalledWith(20, expect.objectContaining({
       dateRange: expect.any(Object),
-    }));
+    }), 'day');
     expect(trackEvent).toHaveBeenCalledWith('test-token', {
       featureId: 4,
       eventTypeId: 1,
@@ -280,7 +283,7 @@ describe('DashboardPage - Unit Tests', () => {
     const callArg = useDashboard.mock.calls[0][0];
     expect(callArg.ageBucketId).toBeNull();
     expect(callArg.genderId).toBeNull();
-    expect(callArg.dateRange.fromDate).toBeTruthy();
-    expect(callArg.dateRange.toDate).toBeTruthy();
+    expect(callArg.dateRange.fromDate).toBeNull();
+    expect(callArg.dateRange.toDate).toBeNull();
   });
 });

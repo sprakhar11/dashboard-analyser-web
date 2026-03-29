@@ -103,4 +103,17 @@ describe('LineChartCard - Unit Tests', () => {
 
     expect(screen.getByText('Daily Trend')).toBeDefined();
   });
+
+  it('title shows "Hourly Trend" when bucket is hour', () => {
+    render(<LineChartCard {...defaultProps} bucket="hour" onBucketChange={() => {}} />);
+
+    expect(screen.getByText('date_picker — Hourly Trend')).toBeDefined();
+  });
+
+  it('renders day/hour toggle buttons when onBucketChange is provided', () => {
+    render(<LineChartCard {...defaultProps} bucket="day" onBucketChange={() => {}} />);
+
+    expect(screen.getByRole('button', { name: 'Day' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Hour' })).toBeDefined();
+  });
 });

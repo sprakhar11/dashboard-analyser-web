@@ -14,7 +14,9 @@ const dashboardStyles = `
     min-height: 100vh;
     background: #f8f8fa;
     padding: 24px;
-    font-family: var(--sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+    color: #08060d;
   }
   .dashboard-header {
     margin-bottom: 20px;
@@ -72,28 +74,16 @@ const dashboardStyles = `
   }
 `;
 
-function getDefaultDateRange() {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 30);
-  return {
-    fromDate: from.toISOString().slice(0, 10),
-    toDate: to.toISOString().slice(0, 10),
-  };
-}
-
 function readFiltersFromCookies() {
   const savedFrom = getCookie(COOKIE_KEYS.fromDate);
   const savedTo = getCookie(COOKIE_KEYS.toDate);
   const savedAge = getCookie(COOKIE_KEYS.ageBucketId);
   const savedGender = getCookie(COOKIE_KEYS.genderId);
 
-  const defaults = getDefaultDateRange();
-
   return {
     dateRange: {
-      fromDate: savedFrom || defaults.fromDate,
-      toDate: savedTo || defaults.toDate,
+      fromDate: savedFrom || null,
+      toDate: savedTo || null,
     },
     ageBucketId: savedAge ? Number(savedAge) : null,
     genderId: savedGender ? Number(savedGender) : null,
@@ -102,6 +92,7 @@ function readFiltersFromCookies() {
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState(readFiltersFromCookies);
+  const [bucket, setBucket] = useState('day');
   const { logout } = useAuth();
   const navigateTo = useNavigate();
 
@@ -135,8 +126,15 @@ export default function DashboardPage() {
   const handleDateRangeChange = useCallback((range) => {
     const next = { ...filters, dateRange: range };
     setFilters(next);
-    setCookie(COOKIE_KEYS.fromDate, range.fromDate);
-    setCookie(COOKIE_KEYS.toDate, range.toDate);
+    setCookie(COOKIE_KEYS.fromDate, range.fromDate || '');
+    setCookie(COOKIE_KEYS.toDate, range.toDate || '');
+
+    // Reset to day bucket if dates are no longer the same day
+    const fromDay = range.fromDate ? range.fromDate.slice(0, 10) : null;
+    const toDay = range.toDate ? range.toDate.slice(0, 10) : null;
+    if (fromDay !== toDay && bucket === 'hour') {
+      setBucket('day');
+    }
 
     const featureId = selectedFeatureId ?? undefined;
     fetchDashboard({ ...next, selectedFeatureId: featureId });
@@ -145,7 +143,7 @@ export default function DashboardPage() {
     if (token) {
       trackEvent(token, { featureId: 1, eventTypeId: 2 });
     }
-  }, [filters, selectedFeatureId, fetchDashboard]);
+  }, [filters, selectedFeatureId, fetchDashboard, bucket]);
 
   const handleAgeBucketChange = useCallback((id) => {
     const next = { ...filters, ageBucketId: id };
@@ -177,13 +175,25 @@ export default function DashboardPage() {
 
   const handleBarClick = useCallback((featureId) => {
     setSelectedFeatureId(featureId);
-    fetchTrend(featureId, filters);
+    fetchDashboard({ ...filters, selectedFeatureId: featureId });
+    fetchTrend(featureId, filters, bucket);
 
     const token = getToken();
     if (token) {
       trackEvent(token, { featureId: 4, eventTypeId: 1 });
     }
-  }, [fetchTrend, setSelectedFeatureId, filters]);
+  }, [fetchDashboard, fetchTrend, setSelectedFeatureId, filters, bucket]);
+
+  const fromDay = filters.dateRange.fromDate ? filters.dateRange.fromDate.slice(0, 10) : null;
+  const toDay = filters.dateRange.toDate ? filters.dateRange.toDate.slice(0, 10) : null;
+  const isSameDay = fromDay != null && toDay != null && fromDay === toDay;
+
+  const handleBucketChange = useCallback((newBucket) => {
+    setBucket(newBucket);
+    if (selectedFeatureId != null) {
+      fetchTrend(selectedFeatureId, filters, newBucket);
+    }
+  }, [selectedFeatureId, filters, fetchTrend]);
 
   // Full-page error if config fails
   if (configError) {
@@ -262,6 +272,9 @@ export default function DashboardPage() {
             data={lineData}
             loading={chartsLoading || trendLoading}
             error={chartsError}
+            bucket={bucket}
+            onBucketChange={handleBucketChange}
+            hourDisabled={!isSameDay}
           />
         </div>
       </div>

@@ -38,8 +38,8 @@ export function AuthProvider({ children }) {
     setUser(profile);
   }, []);
 
-  const register = useCallback(async (name, email, password) => {
-    return authService.register(name, email, password);
+  const register = useCallback(async ({ name, email, password, genderId, age }) => {
+    return authService.register({ name, email, password, genderId, age });
   }, []);
 
   const logout = useCallback(async () => {

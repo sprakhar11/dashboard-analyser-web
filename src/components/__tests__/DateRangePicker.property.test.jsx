@@ -6,45 +6,34 @@ import DateRangePicker from '../DateRangePicker.jsx';
 /**
  * Feature: product-analytics-dashboard, Property 3: DateRangePicker cancel reverts to previous value
  * Validates: Requirements 3.4
- *
- * For any initial date range, if the user opens the DateRangePicker, modifies the
- * start or end date, and then clicks Cancel, the displayed date range should equal
- * the original applied range.
  */
 
-/**
- * Generates a valid YYYY-MM-DD date string within a reasonable range
- * using integer components to avoid invalid Date edge cases.
- */
 const dateArb = fc
   .record({
     year: fc.integer({ min: 2000, max: 2099 }),
     month: fc.integer({ min: 1, max: 12 }),
-    day: fc.integer({ min: 1, max: 28 }), // cap at 28 to avoid invalid month/day combos
+    day: fc.integer({ min: 1, max: 28 }),
   })
   .map(({ year, month, day }) =>
     `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   );
 
-/**
- * Generates a pair of YYYY-MM-DD date strings where fromDate <= toDate.
- */
 const dateRangeArb = fc
   .tuple(dateArb, dateArb)
-  .map(([a, b]) => (a <= b ? { fromDate: a, toDate: b } : { fromDate: b, toDate: a }));
-
-/**
- * Formats a YYYY-MM-DD string to the same display format the component uses
- * (e.g., "Mar 1, 2026"). Mirrors the component's internal formatDate function.
- */
-function formatDate(dateStr) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  .map(([a, b]) => {
+    const [from, to] = a <= b ? [a, b] : [b, a];
+    return { fromDate: `${from}T00:00:00`, toDate: `${to}T23:59:59` };
   });
+
+function formatDisplay(fromDate, toDate) {
+  if (!fromDate && !toDate) return 'All time';
+  const fmt = (str) => {
+    const [y, m, d] = str.slice(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  if (fromDate && toDate) return `${fmt(fromDate)} – ${fmt(toDate)}`;
+  if (fromDate) return `From ${fmt(fromDate)}`;
+  return `Up to ${fmt(toDate)}`;
 }
 
 describe('DateRangePicker - Property Tests', () => {
@@ -54,51 +43,25 @@ describe('DateRangePicker - Property Tests', () => {
 
   it('cancel reverts displayed range to the original value after modification', () => {
     fc.assert(
-      fc.property(
-        dateRangeArb,
-        dateRangeArb,
-        (originalRange, modifiedRange) => {
-          // Skip when modified range is identical to original — no real modification
-          fc.pre(
-            originalRange.fromDate !== modifiedRange.fromDate ||
-            originalRange.toDate !== modifiedRange.toDate
-          );
+      fc.property(dateRangeArb, (originalRange) => {
+        const onChange = vi.fn();
+        const { unmount } = render(
+          <DateRangePicker value={originalRange} onChange={onChange} />
+        );
 
-          const onChange = vi.fn();
+        const expectedText = formatDisplay(originalRange.fromDate, originalRange.toDate);
+        const trigger = screen.getByRole('button', { name: 'Select date range' });
+        expect(trigger.textContent).toBe(expectedText);
 
-          const { unmount } = render(
-            <DateRangePicker value={originalRange} onChange={onChange} />
-          );
+        fireEvent.click(trigger);
+        fireEvent.change(screen.getByLabelText('From'), { target: { value: '2099-12-31' } });
+        fireEvent.change(screen.getByLabelText('To'), { target: { value: '2099-12-31' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-          const expectedText = `${formatDate(originalRange.fromDate)} – ${formatDate(originalRange.toDate)}`;
-
-          // The button should show the original range
-          const trigger = screen.getByRole('button', { name: 'Select date range' });
-          expect(trigger.textContent).toBe(expectedText);
-
-          // Open the popover
-          fireEvent.click(trigger);
-
-          // Modify the date inputs to different values
-          const fromInput = screen.getByLabelText('From');
-          const toInput = screen.getByLabelText('To');
-
-          fireEvent.change(fromInput, { target: { value: modifiedRange.fromDate } });
-          fireEvent.change(toInput, { target: { value: modifiedRange.toDate } });
-
-          // Click Cancel
-          const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-          fireEvent.click(cancelButton);
-
-          // The displayed text should revert to the original range
-          expect(trigger.textContent).toBe(expectedText);
-
-          // onChange should NOT have been called
-          expect(onChange).not.toHaveBeenCalled();
-
-          unmount();
-        }
-      ),
+        expect(trigger.textContent).toBe(expectedText);
+        expect(onChange).not.toHaveBeenCalled();
+        unmount();
+      }),
       { numRuns: 100 }
     );
   });

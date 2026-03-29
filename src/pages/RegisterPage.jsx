@@ -8,6 +8,7 @@ function getErrorMessage(err) {
     case 'EMAIL_ALREADY_EXISTS':
       return 'This email is already registered';
     case 'VALIDATION_ERROR':
+    case 'REGISTRATION_VALIDATION_ERROR':
     case 'INTERNAL_ERROR':
       return err.message;
     default:
@@ -24,10 +25,10 @@ export default function RegisterPage() {
     <>
       {error && <p role="alert">{error}</p>}
       <RegisterForm
-        onSubmit={async (name, email, password) => {
+        onSubmit={async ({ name, email, password, genderId, age }) => {
           setError(null);
           try {
-            await register(name, email, password);
+            await register({ name, email, password, genderId, age });
             navigate('/login', { state: { message: 'Account created! Please log in.' } });
           } catch (err) {
             setError(getErrorMessage(err));

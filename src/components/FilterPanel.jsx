@@ -18,20 +18,26 @@ const filterPanelStyles = `
 
 const selectStyle = {
   padding: '6px 12px',
-  border: '1px solid var(--border, #e5e4e7)',
+  border: '1px solid #e5e4e7',
   borderRadius: '6px',
   fontSize: '14px',
-  fontFamily: 'var(--sans)',
-  color: 'var(--text-h, #08060d)',
-  background: 'var(--bg, #fff)',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  color: '#08060d',
+  backgroundColor: '#fff',
   cursor: 'pointer',
   minWidth: '140px',
+  WebkitAppearance: 'none',
+  appearance: 'none',
+  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23666\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
+  paddingRight: '30px',
 };
 
 const labelStyle = {
   fontSize: '13px',
-  color: 'var(--text, #555)',
-  fontFamily: 'var(--sans)',
+  color: '#555',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   marginBottom: '4px',
 };
 

@@ -52,8 +52,8 @@ export function useDashboard(initialFilters) {
     setChartsError(null);
     try {
       const data = await getDashboard(token, {
-        fromDate: filters.dateRange.fromDate,
-        toDate: filters.dateRange.toDate,
+        fromDate: filters.dateRange.fromDate || undefined,
+        toDate: filters.dateRange.toDate || undefined,
         selectedFeatureId: filters.selectedFeatureId ?? undefined,
         ageBucketId: filters.ageBucketId,
         genderId: filters.genderId,
@@ -69,17 +69,20 @@ export function useDashboard(initialFilters) {
     }
   }, [navigate]);
 
-  const fetchTrend = useCallback(async (featureId, currentFilters) => {
+  const fetchTrend = useCallback(async (featureId, currentFilters, bucket = 'day') => {
     const token = getToken();
     setTrendLoading(true);
     setChartsError(null);
     try {
       const f = currentFilters || initialFilters;
+      // Trend endpoint requires YYYY-MM-DD, extract date part from LocalDateTime
+      const fromDateOnly = f.dateRange.fromDate ? f.dateRange.fromDate.slice(0, 10) : undefined;
+      const toDateOnly = f.dateRange.toDate ? f.dateRange.toDate.slice(0, 10) : undefined;
       const data = await getFeatureTrend(token, {
         featureId,
-        fromDate: f.dateRange.fromDate,
-        toDate: f.dateRange.toDate,
-        bucket: 'day',
+        fromDate: fromDateOnly,
+        toDate: toDateOnly,
+        bucket,
         ageBucketId: f.ageBucketId,
         genderId: f.genderId,
       });

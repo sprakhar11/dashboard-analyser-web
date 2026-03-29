@@ -56,17 +56,30 @@ const spinnerKeyframes = `
 
 /**
  * @param {Object} props
- * @param {{ featureName: string, points: Array<{time: string, count: number}> }|null} props.data
+ * @param {{ featureName: string, bucket: string, points: Array<{time: string, count: number}> }|null} props.data
  * @param {boolean} props.loading
  * @param {string|null} props.error
+ * @param {string} props.bucket - 'day' or 'hour'
+ * @param {(bucket: string) => void} props.onBucketChange
  */
-export default function LineChartCard({ data, loading, error }) {
+export default function LineChartCard({ data, loading, error, bucket, onBucketChange, hourDisabled }) {
   const featureName = data?.featureName;
   const points = data?.points ?? [];
 
+  const bucketLabel = bucket === 'hour' ? 'Hourly' : 'Daily';
   const title = featureName
-    ? `${featureName} — Daily Trend`
-    : 'Daily Trend';
+    ? `${featureName} — ${bucketLabel} Trend`
+    : `${bucketLabel} Trend`;
+
+  const toggleStyle = (active) => ({
+    padding: '3px 10px',
+    border: '1px solid #e5e4e7',
+    background: active ? '#4f8df5' : '#fff',
+    color: active ? '#fff' : '#08060d',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontFamily: 'var(--sans)',
+  });
 
   const renderContent = () => {
     if (loading) {
@@ -115,7 +128,29 @@ export default function LineChartCard({ data, loading, error }) {
 
   return (
     <div style={cardStyle}>
-      <h3 style={titleStyle}>{title}</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ ...titleStyle, margin: 0 }}>{title}</h3>
+        {onBucketChange && (
+          <div style={{ display: 'flex' }}>
+            <button
+              type="button"
+              onClick={() => onBucketChange('day')}
+              style={{ ...toggleStyle(bucket === 'day'), borderRadius: '4px 0 0 4px' }}
+            >
+              Day
+            </button>
+            <button
+              type="button"
+              onClick={() => onBucketChange('hour')}
+              disabled={hourDisabled}
+              title={hourDisabled ? 'Select a single day to view hourly data' : ''}
+              style={{ ...toggleStyle(bucket === 'hour'), borderRadius: '0 4px 4px 0', borderLeft: 'none', ...(hourDisabled ? { opacity: 0.4, cursor: 'not-allowed' } : {}) }}
+            >
+              Hour
+            </button>
+          </div>
+        )}
+      </div>
       {renderContent()}
     </div>
   );

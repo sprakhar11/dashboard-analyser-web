@@ -6,7 +6,7 @@ describe('AuthService - Unit Tests', () => {
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
-    vi.stubEnv('VITE_AUTH_BASE_URL', FAKE_AUTH_URL);
+    vi.stubEnv('VITE_BASE_URL', FAKE_AUTH_URL);
   });
 
   afterEach(() => {

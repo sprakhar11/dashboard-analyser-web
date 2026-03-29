@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { usePing } from '../hooks/usePing.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -20,27 +20,35 @@ function getErrorMessage(err) {
 }
 
 export default function LoginPage() {
-  const { status, databaseStatus, error } = usePing();
+  const { status, databaseStatus } = usePing();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loginError, setLoginError] = useState(null);
+  const hasConnected = useRef(false);
 
   const successMessage = location.state?.message;
 
-  if (status === 'loading') {
-    return <p>Loading...</p>;
+  // Track if we've ever reached connected state
+  if (status === 'connected') {
+    hasConnected.current = true;
   }
 
-  if (status === 'error') {
-    return <p role="status">Connecting to backend...</p>;
+  // Only show loading/connecting screens before the first successful connection
+  if (!hasConnected.current) {
+    if (status === 'loading') {
+      return <p>Loading...</p>;
+    }
+
+    if (status === 'error') {
+      return <p role="status">Connecting to backend...</p>;
+    }
+
+    if (status === 'disconnected') {
+      return <HealthStatusDisplay databaseStatus={databaseStatus} />;
+    }
   }
 
-  if (status === 'disconnected') {
-    return <HealthStatusDisplay databaseStatus={databaseStatus} />;
-  }
-
-  // status === 'connected'
   return (
     <>
       {successMessage && <p role="status">{successMessage}</p>}

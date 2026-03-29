@@ -19,19 +19,19 @@ describe('AuthService - Unit Tests', () => {
    * Validates: Requirement 1.1
    */
   it('register() sends correct POST request and returns parsed response', async () => {
-    const mockResponse = { userId: 1, email: 'test@example.com', message: 'User registered successfully' };
+    const mockResponse = { userId: 1, name: 'Test User', email: 'test@example.com', age: 25, gender: { id: 1, code: 'MALE', name: 'Male' }, message: 'User registered successfully' };
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockResponse),
     });
 
     const { register } = await import('../auth.js');
-    const result = await register('Test User', 'test@example.com', 'password123');
+    const result = await register({ name: 'Test User', email: 'test@example.com', password: 'password123', genderId: 1, age: 25 });
 
     expect(globalThis.fetch).toHaveBeenCalledWith(`${FAKE_AUTH_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Test User', email: 'test@example.com', password: 'password123' }),
+      body: JSON.stringify({ name: 'Test User', email: 'test@example.com', password: 'password123', genderId: 1, age: 25 }),
     });
     expect(result).toEqual(mockResponse);
   });
@@ -109,7 +109,7 @@ describe('AuthService - Unit Tests', () => {
     const { register } = await import('../auth.js');
 
     try {
-      await register('Test', 'test@example.com', 'pass');
+      await register({ name: 'Test', email: 'test@example.com', password: 'pass', genderId: 1, age: 25 });
       expect.unreachable('Should have thrown');
     } catch (err) {
       expect(err.message).toBe('Email is already registered');
@@ -148,6 +148,6 @@ describe('AuthService - Unit Tests', () => {
 
     const { register } = await import('../auth.js');
 
-    await expect(register('Test', 'test@example.com', 'pass')).rejects.toThrow('Failed to fetch');
+    await expect(register({ name: 'Test', email: 'test@example.com', password: 'pass', genderId: 1, age: 25 })).rejects.toThrow('Failed to fetch');
   });
 });

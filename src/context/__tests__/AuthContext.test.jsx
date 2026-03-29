@@ -149,10 +149,10 @@ describe('AuthContext', () => {
 
     let result;
     await act(async () => {
-      result = await latestAuth.register('New User', 'new@test.com', 'pass123');
+      result = await latestAuth.register({ name: 'New User', email: 'new@test.com', password: 'pass123', genderId: 1, age: 25 });
     });
 
-    expect(authService.register).toHaveBeenCalledWith('New User', 'new@test.com', 'pass123');
+    expect(authService.register).toHaveBeenCalledWith({ name: 'New User', email: 'new@test.com', password: 'pass123', genderId: 1, age: 25 });
     expect(result).toEqual(registerResponse);
     expect(latestAuth.user).toBeNull();
     expect(setToken).not.toHaveBeenCalled();

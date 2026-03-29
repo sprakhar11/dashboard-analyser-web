@@ -12,16 +12,14 @@ async function handleResponse(response) {
 }
 
 /**
- * @param {string} name
- * @param {string} email
- * @param {string} password
- * @returns {Promise<{ userId: number, email: string, message: string }>}
+ * @param {{ name: string, email: string, password: string, genderId: number, age: number }} params
+ * @returns {Promise<{ userId: number, name: string, email: string, age: number, gender: object, message: string }>}
  */
-export async function register(name, email, password) {
+export async function register({ name, email, password, genderId, age }) {
   const response = await fetch(`${AUTH_BASE_URL}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ name, email, password, genderId, age }),
   });
   return handleResponse(response);
 }

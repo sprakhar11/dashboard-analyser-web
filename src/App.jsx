@@ -21,6 +21,32 @@ const centerStyle = {
   color: '#555',
 };
 
+const spinnerKeyframes = `
+  @keyframes app-spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const spinnerStyle = {
+  width: '36px',
+  height: '36px',
+  border: '3px solid #e5e4e7',
+  borderTop: '3px solid #4f8df5',
+  borderRadius: '50%',
+  animation: 'app-spin 0.8s linear infinite',
+};
+
+function ConnectingScreen() {
+  return (
+    <div style={{ ...centerStyle, flexDirection: 'column', gap: '16px' }}>
+      <style>{spinnerKeyframes}</style>
+      <div style={spinnerStyle} />
+      <p role="status" style={{ margin: 0, fontSize: '15px', color: '#08060d', fontWeight: 500 }}>Connecting to server...</p>
+      <p style={{ margin: 0, fontSize: '13px', color: '#888' }}>If this takes more than 3–5 minutes, check that the backend is running.</p>
+    </div>
+  );
+}
+
 function AppRoutes() {
   const { status, databaseStatus } = usePing();
   const hasConnected = useRef(false);
@@ -30,11 +56,8 @@ function AppRoutes() {
   }
 
   if (!hasConnected.current) {
-    if (status === 'loading') {
-      return <div style={centerStyle}><p>Loading...</p></div>;
-    }
-    if (status === 'error') {
-      return <div style={centerStyle}><p role="status">Connecting to backend...</p></div>;
+    if (status === 'loading' || status === 'error') {
+      return <ConnectingScreen />;
     }
     if (status === 'disconnected') {
       return <HealthStatusDisplay databaseStatus={databaseStatus} />;

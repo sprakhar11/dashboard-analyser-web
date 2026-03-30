@@ -161,14 +161,14 @@ export default function DateRangePicker({ value, onChange }) {
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <label htmlFor="date-range-from" style={labelStyle}>From</label>
-              <input id="date-range-from" type="date" value={draftFromDate} onChange={(e) => setDraftFromDate(e.target.value)} style={inputStyle} />
-              <input id="time-range-from" type="time" aria-label="From time" value={draftFromTime} onChange={(e) => setDraftFromTime(e.target.value)} style={{ ...inputStyle, width: '100px' }} />
+              <input id="date-range-from" type="date" value={draftFromDate} onChange={(e) => { setDraftFromDate(e.target.value); if (!e.target.value) setDraftFromTime(''); }} style={inputStyle} />
+              <input id="time-range-from" type="time" aria-label="From time" value={draftFromTime} onChange={(e) => setDraftFromTime(e.target.value)} disabled={!draftFromDate} style={{ ...inputStyle, width: '100px', ...(draftFromDate ? {} : { opacity: 0.4, cursor: 'not-allowed' }) }} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <label htmlFor="date-range-to" style={labelStyle}>To</label>
-              <input id="date-range-to" type="date" value={draftToDate} onChange={(e) => setDraftToDate(e.target.value)} style={inputStyle} />
-              <input id="time-range-to" type="time" aria-label="To time" value={draftToTime} onChange={(e) => setDraftToTime(e.target.value)} style={{ ...inputStyle, width: '100px' }} />
+              <input id="date-range-to" type="date" value={draftToDate} onChange={(e) => { setDraftToDate(e.target.value); if (!e.target.value) setDraftToTime(''); }} style={inputStyle} />
+              <input id="time-range-to" type="time" aria-label="To time" value={draftToTime} onChange={(e) => setDraftToTime(e.target.value)} disabled={!draftToDate} style={{ ...inputStyle, width: '100px', ...(draftToDate ? {} : { opacity: 0.4, cursor: 'not-allowed' }) }} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

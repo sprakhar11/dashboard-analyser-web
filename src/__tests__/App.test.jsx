@@ -46,7 +46,7 @@ describe('App Routing', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Loading...')).toBeDefined();
+    expect(screen.getByText('Welcome back')).toBeDefined();
   });
 
   /**

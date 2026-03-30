@@ -1,9 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { usePing } from '../hooks/usePing.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import LoginForm from '../components/LoginForm.jsx';
-import HealthStatusDisplay from '../components/HealthStatusDisplay.jsx';
 
 const pageStyle = {
   minHeight: '100vh',
@@ -49,13 +47,6 @@ const msgStyle = {
   textAlign: 'center',
 };
 
-const linkStyle = {
-  fontSize: '13px',
-  color: '#555',
-  textAlign: 'center',
-  marginTop: '20px',
-};
-
 function getErrorMessage(err) {
   switch (err.code) {
     case 'INVALID_CREDENTIALS':
@@ -71,30 +62,12 @@ function getErrorMessage(err) {
 }
 
 export default function LoginPage() {
-  const { status, databaseStatus } = usePing();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loginError, setLoginError] = useState(null);
-  const hasConnected = useRef(false);
 
   const successMessage = location.state?.message;
-
-  if (status === 'connected') {
-    hasConnected.current = true;
-  }
-
-  if (!hasConnected.current) {
-    if (status === 'loading') {
-      return <div style={pageStyle}><div style={cardStyle}><p style={{ textAlign: 'center', color: '#888' }}>Loading...</p></div></div>;
-    }
-    if (status === 'error') {
-      return <div style={pageStyle}><div style={cardStyle}><p role="status" style={{ textAlign: 'center', color: '#888' }}>Connecting to backend...</p></div></div>;
-    }
-    if (status === 'disconnected') {
-      return <HealthStatusDisplay databaseStatus={databaseStatus} />;
-    }
-  }
 
   return (
     <div style={pageStyle}>
@@ -122,7 +95,7 @@ export default function LoginPage() {
             }
           }}
         />
-        <p style={linkStyle}>
+        <p style={{ fontSize: '13px', color: '#555', textAlign: 'center', marginTop: '20px' }}>
           Don&apos;t have an account?{' '}
           <Link to="/register" style={{ color: '#4f8df5', textDecoration: 'none', fontWeight: 500 }}>Register</Link>
         </p>

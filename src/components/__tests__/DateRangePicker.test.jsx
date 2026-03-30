@@ -96,4 +96,23 @@ describe('DateRangePicker - Unit Tests', () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('custom Apply with specific times sends correct LocalDateTime', () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker value={defaultValue} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Select date range' }));
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-03-29' } });
+    fireEvent.change(screen.getByLabelText('From time'), { target: { value: '10:00' } });
+    fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-03-29' } });
+    fireEvent.change(screen.getByLabelText('To time'), { target: { value: '18:00' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(onChange).toHaveBeenCalledWith({ fromDate: '2026-03-29T10:00:00', toDate: '2026-03-29T18:00:59' });
+  });
+
+  it('displays time in trigger text when not start/end of day', () => {
+    render(<DateRangePicker value={{ fromDate: '2026-03-29T10:00:00', toDate: '2026-03-29T18:00:00' }} onChange={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: 'Select date range' });
+    expect(trigger.textContent).toContain('10:00');
+    expect(trigger.textContent).toContain('18:00');
+  });
 });
